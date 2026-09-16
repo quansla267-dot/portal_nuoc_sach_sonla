@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
+import shutil
 import subprocess
 from datetime import datetime
 import pandas as pd
@@ -8,15 +9,19 @@ import pandas as pd
 class CapNhatTaiKhoanApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("CẬP NHẬT TÀI KHOẢN & ĐẨY LÊN GITHUB — KT&VLXD_quansla.267@gmail.com")
-        self.root.geometry("650x550")
+        self.root.title("CẬP NHẬT TÀI KHOẢN & ĐẨY LÊN GITHUB — Nước sạch Sơn La")
+        self.root.geometry("650x580")
         self.root.resizable(True, True)
         
-        # Thư mục làm việc
+        # === Thư mục gốc = thư mục chứa file CapNhat_TuDong.py ===
         self.thu_muc_goc = os.path.dirname(os.path.abspath(__file__))
         os.chdir(self.thu_muc_goc)
         
-        # Mẫu code app.py — ĐÃ SỬA lỗi định dạng chuỗi f-string
+        # Thư mục lưu file mẫu
+        self.thu_muc_mau = os.path.join(self.thu_muc_goc, "templates")
+        os.makedirs(self.thu_muc_mau, exist_ok=True)
+        
+        # Mẫu code app.py
         self.mau_code_app = '''import streamlit as st
 import pandas as pd
 import gspread
@@ -53,11 +58,12 @@ def kiem_tra_dang_nhap(tk, mk):
 
 # ===== TẢI FILE MẪU =====
 def tai_file_mau():
-    duong_dan = "templates/Form_Mau_Nuoc_Sach_Chuan.xlsx"
-    if os.path.exists(duong_dan):
-        with open(duong_dan, "rb") as f:
-            return f.read()
-    return None
+    for ten_file in os.listdir("templates"):
+        if ten_file.lower().endswith((".xlsx", ".xls")):
+            duong_dan = os.path.join("templates", ten_file)
+            with open(duong_dan, "rb") as f:
+                return f.read(), ten_file
+    return None, None
 
 # ===== LƯU DỮ LIỆU VÀO GOOGLE SHEETS =====
 def luu_vao_sheets(ten_donvi, df):
@@ -110,13 +116,15 @@ else:
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
     
     with tab1:
-        mau = tai_file_mau()
-        if mau:
+        mau_data, ten_mau = tai_file_mau()
+        if mau_data:
             st.download_button(
-                "📥 Tải file mẫu chuẩn",
-                data=mau,
+                f"📥 Tải file mẫu: {ten_mau}",
+                data=mau_data,
                 file_name=f"BaoCao_{nd['DonVi']}.xlsx"
             )
+        else:
+            st.warning("⚠️ Chưa có file mẫu — Quản trị vui lòng cập nhật!")
         
         st.markdown("---")
         file_up = st.file_uploader("Chọn file đã điền dữ liệu", type=["xlsx"])
@@ -155,7 +163,7 @@ else:
         khung = tk.Frame(self.root)
         khung.pack(padx=30, pady=5, fill="both", expand=True)
 
-        # 1. File Excel tài khoản
+        # === 1. File Excel tài khoản — MỞ TỪ THƯ MỤC CHỨA CHƯƠNG TRÌNH ===
         khung1 = tk.LabelFrame(khung, text="📋 File Excel — Danh sách tài khoản", padx=10, pady=8)
         khung1.pack(fill="x", pady=5)
         self.duong_dan_excel_tk = tk.StringVar()
@@ -183,7 +191,7 @@ else:
                   font=("Arial", 13, "bold"), padx=40, pady=12).pack(pady=15)
 
         # Kết quả
-        self.ket_qua = tk.Text(self.root, height=10, wrap="word", font=("Consolas", 9))
+        self.ket_qua = tk.Text(self.root, height=12, wrap="word", font=("Consolas", 9))
         self.ket_qua.pack(padx=20, pady=(0,15), fill="both", expand=True)
         self.ket_qua.config(state="disabled")
 
@@ -195,24 +203,28 @@ else:
         self.root.update()
 
     def chon_excel_tai_khoan(self):
+        """Mở mặc định tại thư mục chứa file CapNhat_TuDong.py"""
         f = filedialog.askopenfilename(
             title="Chọn file Excel danh sách tài khoản",
-            filetypes=[("Excel", "*.xlsx *.xls")]
+            initialdir=self.thu_muc_goc,  # === MỞ TẠI THƯ MỤC CHƯƠNG TRÌNH ===
+            filetypes=[("Excel", "*.xlsx"), ("Excel 97-2003", "*.xls")]
         )
-        if f: self.duong_dan_excel_tk.set(f)
+        if f: 
+            self.duong_dan_excel_tk.set(f)
+            self.ghi(f"✅ Đã chọn: {os.path.basename(f)}")
 
     def chon_file_mau(self):
         f = filedialog.askopenfilename(
             title="Chọn file Excel mẫu/biểu mẫu",
-            filetypes=[("Excel", "*.xlsx *.xls")]
+            filetypes=[("Excel", "*.xlsx"), ("Excel 97-2003", "*.xls")]
         )
-        if f: self.duong_dan_file_mau.set(f)
+        if f:
+            self.duong_dan_file_mau.set(f)
+            self.ghi(f"✅ Đã chọn file mẫu: {os.path.basename(f)}")
 
     def doc_danh_sach_tu_excel(self, duong_dan):
-        """Đọc Excel & chuyển thành danh sách Python tự động"""
         try:
             df = pd.read_excel(duong_dan, dtype=str)
-            # Đổi tên cột chuẩn hóa
             anh_xa = {
                 "TaiKhoan": "TaiKhoan", "Username": "TaiKhoan", "Tên tài khoản": "TaiKhoan",
                 "MatKhau": "MatKhau", "Mat_Khau": "MatKhau", "Mật khẩu": "MatKhau",
@@ -220,12 +232,10 @@ else:
                 "DonVi": "DonVi", "Ten_Xa_Phuong": "DonVi", "Đơn vị": "DonVi"
             }
             df = df.rename(columns={c: anh_xa.get(c.strip(), c.strip()) for c in df.columns})
-            # Chuẩn hóa cột
             for cot in ["TaiKhoan", "MatKhau", "VaiTro", "DonVi"]:
                 if cot not in df.columns:
                     df[cot] = ""
             df = df.fillna("")
-            # Tạo chuỗi Python
             dong = []
             for _, row in df.iterrows():
                 dong.append(f'    {{"TaiKhoan": "{row["TaiKhoan"]}", "MatKhau": "{row["MatKhau"]}", "VaiTro": "{row["VaiTro"]}", "DonVi": "{row["DonVi"]}"}}')
@@ -235,7 +245,6 @@ else:
             return None
 
     def tao_app_py_moi(self, noi_dung_danh_sach):
-        """Tạo file app.py hoàn chỉnh với danh sách mới — ĐÃ SỬA lỗi định dạng"""
         code = self.mau_code_app.replace("{DANH_SACH_TAI_KHOAN}", noi_dung_danh_sach)
         with open("app.py", "w", encoding="utf-8") as f:
             f.write(code)
@@ -251,8 +260,8 @@ else:
     def thuc_hien(self):
         self.ghi("="*50)
         
-        # Bước 1: Kiểm tra đầu vào
-        if not self.duong_dan_excel_tk.get():
+        # Kiểm tra file tài khoản
+        if not self.duong_dan_excel_tk.get().strip():
             messagebox.showwarning("Thiếu file", "Vui lòng chọn file Excel tài khoản!")
             return
         
@@ -260,29 +269,41 @@ else:
             messagebox.showerror("Thiếu Git", "Chưa cài Git!\nTải tại: git-scm.com/download/win")
             return
 
-        # Bước 2: Đọc Excel → tạo danh sách
-        self.ghi("📖 Đọc danh sách từ Excel...")
-        ds = self.doc_danh_sach_tu_excel(self.duong_dan_excel_tk.get())
+        # Đọc Excel tài khoản
+        self.ghi("📖 Đọc danh sách tài khoản...")
+        ds = self.doc_danh_sach_tu_excel(self.duong_dan_excel_tk.get().strip())
         if ds is None: return
         self.ghi(f"✅ Đã đọc được {ds.count('TaiKhoan')} tài khoản")
 
-        # Bước 3: Tạo app.py mới
-        self.ghi("⚙️ Tạo file app.py mới...")
+        # Tạo app.py
+        self.ghi("⚙️ Tạo file app.py...")
         self.tao_app_py_moi(ds)
-        self.ghi("✅ Đã cập nhật app.py với danh sách tài khoản mới & sửa lỗi hiển thị")
+        self.ghi("✅ Đã cập nhật app.py")
 
-        # Bước 4: Sao chép file mẫu Excel (nếu có chọn)
-        if self.duong_dan_file_mau.get():
-            try:
-                if not os.path.exists("templates"): os.makedirs("templates")
-                ten_file = os.path.basename(self.duong_dan_file_mau.get())
-                with open(self.duong_dan_file_mau.get(), "rb") as f: nd = f.read()
-                with open(f"templates/{ten_file}", "wb") as f: f.write(nd)
-                self.ghi(f"✅ Đã cập nhật file mẫu: {ten_file}")
-            except Exception as e:
-                self.ghi(f"⚠️ Lỗi sao chép file mẫu: {e}")
+        # === SAO CHÉP FILE MẪU ===
+        duong_dan_mau = self.duong_dan_file_mau.get().strip()
+        if duong_dan_mau:
+            self.ghi(f"🔍 Kiểm tra file mẫu: {duong_dan_mau}")
+            if os.path.isfile(duong_dan_mau):
+                try:
+                    ten_file = os.path.basename(duong_dan_mau)
+                    # Xóa file mẫu cũ
+                    for f in os.listdir(self.thu_muc_mau):
+                        if f.lower().endswith((".xlsx", ".xls")):
+                            os.remove(os.path.join(self.thu_muc_mau, f))
+                            self.ghi(f"🗑️  Xóa file cũ: {f}")
+                    # Sao chép file mới
+                    dich = os.path.join(self.thu_muc_mau, ten_file)
+                    shutil.copy2(duong_dan_mau, dich)
+                    self.ghi(f"✅ Đã cập nhật file mẫu: {ten_file}")
+                except Exception as e:
+                    self.ghi(f"❌ Lỗi sao chép: {str(e)}")
+            else:
+                self.ghi(f"❌ Không tìm thấy file: {duong_dan_mau}")
+        else:
+            self.ghi("ℹ️ Bỏ qua file mẫu (chưa chọn)")
 
-        # Bước 5: Kết nối Git nếu chưa có
+        # Khởi tạo Git nếu chưa có
         if not os.path.exists(".git"):
             self.ghi("🔧 Khởi tạo kết nối Git...")
             subprocess.run(["git", "init"], capture_output=True)
@@ -290,41 +311,35 @@ else:
                 "https://github.com/quansla267-dot/portal_nuoc_sach_sonla.git"], capture_output=True)
             subprocess.run(["git", "branch", "-M", "main"], capture_output=True)
 
-        # Bước 6: Thêm & Commit
+        # Commit & Đẩy lên GitHub
         subprocess.run(["git", "add", "."], capture_output=True)
         ghichu = self.ghi_chu.get().strip() or f"Cập nhật {datetime.now().strftime('%d/%m/%Y')}"
         kq_commit = subprocess.run(["git", "commit", "-m", ghichu], capture_output=True, text=True)
         
         if kq_commit.returncode != 0:
             if "nothing to commit" in kq_commit.stdout + kq_commit.stderr:
-                self.ghi("ℹ️ Không có thay đổi mới")
-                messagebox.showinfo("Thông báo", "Không có gì thay đổi!")
+                self.ghi("ℹ️ Không có thay đổi mới để đẩy")
+            else:
+                self.ghi(f"❌ Lỗi Commit: {kq_commit.stderr}")
                 return
-            self.ghi(f"❌ Lỗi Commit: {kq_commit.stderr}")
-            return
-
-        # Bước 7: Đẩy lên GitHub — tự xử lý xung đột
-        self.ghi("📤 Đang đẩy lên GitHub...")
-        kq_push = subprocess.run(["git", "push", "-u", "origin", "main"], capture_output=True, text=True)
-        
-        if kq_push.returncode != 0:
-            # Bị từ chối → lấy về rồi buộc đẩy
-            self.ghi("⚠️ Có thay đổi trên GitHub → đồng bộ & đẩy...")
-            subprocess.run(["git", "pull", "origin", "main", "--no-edit"], capture_output=True)
-            subprocess.run(["git", "add", "."], capture_output=True)
-            subprocess.run(["git", "commit", "-m", "Đồng bộ"], capture_output=True, text=True)
-            kq_push = subprocess.run(["git", "push", "--force", "-u", "origin", "main"], capture_output=True, text=True)
-        
-        if kq_push.returncode == 0:
-            self.ghi("")
-            self.ghi("🎉 THÀNH CÔNG! Đã đẩy lên GitHub ✅")
-            self.ghi("→ Streamlit cập nhật sau 1-2 phút")
-            messagebox.showinfo("Hoàn thành", "✅ Đã sửa lỗi hiển thị!\nTải lại trang Streamlit xem tên đúng nhé!")
         else:
-            self.ghi(f"❌ Lỗi cuối: {kq_push.stderr}")
-            messagebox.showerror("Lỗi", "Vui lòng chạy thủ công:\ngit push --force -u origin main")
+            self.ghi("📤 Đang đẩy lên GitHub...")
+            kq_push = subprocess.run(["git", "push", "-u", "origin", "main"], capture_output=True, text=True)
+            
+            if kq_push.returncode != 0:
+                subprocess.run(["git", "pull", "origin", "main", "--no-edit"], capture_output=True)
+                subprocess.run(["git", "add", "."], capture_output=True)
+                subprocess.run(["git", "commit", "-m", "Đồng bộ"], capture_output=True, text=True)
+                kq_push = subprocess.run(["git", "push", "--force", "-u", "origin", "main"], capture_output=True, text=True)
+            
+            if kq_push.returncode == 0:
+                self.ghi("")
+                self.ghi("🎉 THÀNH CÔNG! Đã đẩy lên GitHub ✅")
+                messagebox.showinfo("Hoàn thành", "✅ Cập nhật xong!\nTải lại Streamlit để kiểm tra nút tải file mẫu")
+            else:
+                self.ghi(f"❌ Lỗi đẩy: {kq_push.stderr}")
+                messagebox.showerror("Lỗi", "Chạy thủ công: git push --force -u origin main")
 
-# ===== CHẠY CHƯƠNG TRÌNH =====
 if __name__ == "__main__":
     root = tk.Tk()
     app = CapNhatTaiKhoanApp(root)

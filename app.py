@@ -41,11 +41,12 @@ def kiem_tra_dang_nhap(tk, mk):
 
 # ===== TẢI FILE MẪU =====
 def tai_file_mau():
-    duong_dan = "templates/Form_Mau_Nuoc_Sach_Chuan.xlsx"
-    if os.path.exists(duong_dan):
-        with open(duong_dan, "rb") as f:
-            return f.read()
-    return None
+    for ten_file in os.listdir("templates"):
+        if ten_file.lower().endswith((".xlsx", ".xls")):
+            duong_dan = os.path.join("templates", ten_file)
+            with open(duong_dan, "rb") as f:
+                return f.read(), ten_file
+    return None, None
 
 # ===== LƯU DỮ LIỆU VÀO GOOGLE SHEETS =====
 def luu_vao_sheets(ten_donvi, df):
@@ -98,13 +99,15 @@ else:
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
     
     with tab1:
-        mau = tai_file_mau()
-        if mau:
+        mau_data, ten_mau = tai_file_mau()
+        if mau_data:
             st.download_button(
-                "📥 Tải file mẫu chuẩn",
-                data=mau,
+                f"📥 Tải file mẫu: {ten_mau}",
+                data=mau_data,
                 file_name=f"BaoCao_{nd['DonVi']}.xlsx"
             )
+        else:
+            st.warning("⚠️ Chưa có file mẫu — Quản trị vui lòng cập nhật!")
         
         st.markdown("---")
         file_up = st.file_uploader("Chọn file đã điền dữ liệu", type=["xlsx"])
