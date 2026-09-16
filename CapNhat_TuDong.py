@@ -16,7 +16,7 @@ class CapNhatTaiKhoanApp:
         self.thu_muc_goc = os.path.dirname(os.path.abspath(__file__))
         os.chdir(self.thu_muc_goc)
         
-        # Mẫu code app.py — vị trí chèn danh sách được đánh dấu
+        # Mẫu code app.py — ĐÃ SỬA lỗi định dạng chuỗi f-string
         self.mau_code_app = '''import streamlit as st
 import pandas as pd
 import gspread
@@ -41,7 +41,7 @@ def ket_noi_gsheets():
         client = gspread.authorize(creds)
         return client.open_by_key(st.secrets["google_sheets_master_id"])
     except Exception as e:
-        st.error(f"Lỗi kết nối Google: {{str(e)}}")
+        st.error(f"Lỗi kết nối Google: {str(e)}")
         return None
 
 # ===== KIỂM TRA ĐĂNG NHẬP =====
@@ -105,7 +105,7 @@ if st.session_state.nguoi_dung is None:
             st.error("❌ Sai tài khoản hoặc mật khẩu!")
 else:
     nd = st.session_state.nguoi_dung
-    st.success(f"✅ Xin chào: {{nd['TaiKhoan']}} — {{nd['DonVi']}} ({{nd['VaiTro']}})")
+    st.success(f"✅ Xin chào: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
     
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
     
@@ -115,7 +115,7 @@ else:
             st.download_button(
                 "📥 Tải file mẫu chuẩn",
                 data=mau,
-                file_name=f"BaoCao_{{nd['DonVi']}}.xlsx"
+                file_name=f"BaoCao_{nd['DonVi']}.xlsx"
             )
         
         st.markdown("---")
@@ -129,15 +129,15 @@ else:
                 if st.button("✅ Nộp báo cáo"):
                     ok, msg = luu_vao_sheets(nd["DonVi"], df_data)
                     if ok:
-                        st.success(f"✅ {{msg}}")
+                        st.success(f"✅ {msg}")
                     else:
-                        st.error(f"❌ {{msg}}")
+                        st.error(f"❌ {msg}")
             except Exception as e:
-                st.error(f"❌ Lỗi đọc file: {{str(e)}}")
+                st.error(f"❌ Lỗi đọc file: {str(e)}")
     
     with tab2:
         if nd["VaiTro"] == "Quản trị":
-            link_master = f"https://docs.google.com/spreadsheets/d/{{st.secrets['google_sheets_master_id']}}/edit"
+            link_master = f"https://docs.google.com/spreadsheets/d/{st.secrets['google_sheets_master_id']}/edit"
             st.link_button("📋 Mở Bảng tổng hợp Master", link_master)
         else:
             st.info("🔒 Chỉ quản trị viên xem được tổng hợp toàn tỉnh")
@@ -235,7 +235,7 @@ else:
             return None
 
     def tao_app_py_moi(self, noi_dung_danh_sach):
-        """Tạo file app.py hoàn chỉnh với danh sách mới"""
+        """Tạo file app.py hoàn chỉnh với danh sách mới — ĐÃ SỬA lỗi định dạng"""
         code = self.mau_code_app.replace("{DANH_SACH_TAI_KHOAN}", noi_dung_danh_sach)
         with open("app.py", "w", encoding="utf-8") as f:
             f.write(code)
@@ -269,7 +269,7 @@ else:
         # Bước 3: Tạo app.py mới
         self.ghi("⚙️ Tạo file app.py mới...")
         self.tao_app_py_moi(ds)
-        self.ghi("✅ Đã cập nhật app.py với danh sách tài khoản mới")
+        self.ghi("✅ Đã cập nhật app.py với danh sách tài khoản mới & sửa lỗi hiển thị")
 
         # Bước 4: Sao chép file mẫu Excel (nếu có chọn)
         if self.duong_dan_file_mau.get():
@@ -319,7 +319,7 @@ else:
             self.ghi("")
             self.ghi("🎉 THÀNH CÔNG! Đã đẩy lên GitHub ✅")
             self.ghi("→ Streamlit cập nhật sau 1-2 phút")
-            messagebox.showinfo("Hoàn thành", "✅ Thành công!\nTừ sau dùng bình thường nhé!")
+            messagebox.showinfo("Hoàn thành", "✅ Đã sửa lỗi hiển thị!\nTải lại trang Streamlit xem tên đúng nhé!")
         else:
             self.ghi(f"❌ Lỗi cuối: {kq_push.stderr}")
             messagebox.showerror("Lỗi", "Vui lòng chạy thủ công:\ngit push --force -u origin main")

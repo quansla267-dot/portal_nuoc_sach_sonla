@@ -29,7 +29,7 @@ def ket_noi_gsheets():
         client = gspread.authorize(creds)
         return client.open_by_key(st.secrets["google_sheets_master_id"])
     except Exception as e:
-        st.error(f"Lỗi kết nối Google: {{str(e)}}")
+        st.error(f"Lỗi kết nối Google: {str(e)}")
         return None
 
 # ===== KIỂM TRA ĐĂNG NHẬP =====
@@ -93,7 +93,7 @@ if st.session_state.nguoi_dung is None:
             st.error("❌ Sai tài khoản hoặc mật khẩu!")
 else:
     nd = st.session_state.nguoi_dung
-    st.success(f"✅ Xin chào: {{nd['TaiKhoan']}} — {{nd['DonVi']}} ({{nd['VaiTro']}})")
+    st.success(f"✅ Xin chào: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
     
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
     
@@ -103,7 +103,7 @@ else:
             st.download_button(
                 "📥 Tải file mẫu chuẩn",
                 data=mau,
-                file_name=f"BaoCao_{{nd['DonVi']}}.xlsx"
+                file_name=f"BaoCao_{nd['DonVi']}.xlsx"
             )
         
         st.markdown("---")
@@ -117,15 +117,15 @@ else:
                 if st.button("✅ Nộp báo cáo"):
                     ok, msg = luu_vao_sheets(nd["DonVi"], df_data)
                     if ok:
-                        st.success(f"✅ {{msg}}")
+                        st.success(f"✅ {msg}")
                     else:
-                        st.error(f"❌ {{msg}}")
+                        st.error(f"❌ {msg}")
             except Exception as e:
-                st.error(f"❌ Lỗi đọc file: {{str(e)}}")
+                st.error(f"❌ Lỗi đọc file: {str(e)}")
     
     with tab2:
         if nd["VaiTro"] == "Quản trị":
-            link_master = f"https://docs.google.com/spreadsheets/d/{{st.secrets['google_sheets_master_id']}}/edit"
+            link_master = f"https://docs.google.com/spreadsheets/d/{st.secrets['google_sheets_master_id']}/edit"
             st.link_button("📋 Mở Bảng tổng hợp Master", link_master)
         else:
             st.info("🔒 Chỉ quản trị viên xem được tổng hợp toàn tỉnh")
