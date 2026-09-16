@@ -7,14 +7,38 @@ import os
 # ===== DANH SÁCH TÀI KHOẢN — TỰ CẬP NHẬT TỪ EXCEL =====
 DANH_SACH_TAI_KHOAN = [
     {"TaiKhoan": "admin", "MatKhau": "admin", "VaiTro": "Quản trị", "DonVi": "ADMIN"},
-    {"TaiKhoan": "tanlap", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Tân Lập"},
-    {"TaiKhoan": "chiengson", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Chiềng Sơn"},
-    {"TaiKhoan": "bacyen", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Bắc Yên"},
-    {"TaiKhoan": "yenchau", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Yên Châu"},
-    {"TaiKhoan": "chienghac", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Chiềng Hặc"},
-    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Phiêng Khoài"},
-    {"TaiKhoan": "phiengcam", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Phiêng Cằm"}
+    {"TaiKhoan": "tanlap", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Tân Lập"},
+    {"TaiKhoan": "chiengson", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Chiềng Sơn"},
+    {"TaiKhoan": "bacyen", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Bắc Yên"},
+    {"TaiKhoan": "yenchau", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Yên Châu"},
+    {"TaiKhoan": "chienghac", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Chiềng Hặc"},
+    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Phiêng Khoài"},
+    {"TaiKhoan": "phiengcam", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Phiêng Cằm"}
 ]
+
+# ===== CẤU HÌNH GIAO DIỆN — NỀN TỐI MẶC ĐỊNH =====
+st.set_page_config(
+    page_title="HỆ THỐNG BÁO CÁO NƯỚC SẠCH TỈNH SƠN LA",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={}
+)
+
+# === BUỘC NỀN TỐI ===
+st.markdown("""
+<style>
+    .stApp {{
+        background-color: #0E1117;
+        color: #FAFAFA;
+    }}
+    div[data-testid="stForm"] {{
+        background-color: #262730;
+    }}
+    .stButton>button {{
+        width: 100%;
+    }}
+</style>
+""", unsafe_allow_html=True)
 
 # ===== CẤU HÌNH KẾT NỐI =====
 SCOPES = [
@@ -74,7 +98,6 @@ def luu_vao_sheets(ten_donvi, df):
     return True, "Đã lưu thành công"
 
 # ===== GIAO DIỆN CHÍNH =====
-st.set_page_config(page_title="Báo cáo Nước sạch Sơn La", layout="wide")
 st.title("🏞️ HỆ THỐNG BÁO CÁO NƯỚC SẠCH TỈNH SƠN LA")
 
 if "nguoi_dung" not in st.session_state:
@@ -82,10 +105,14 @@ if "nguoi_dung" not in st.session_state:
 
 if st.session_state.nguoi_dung is None:
     st.subheader("🔐 Đăng nhập hệ thống")
-    tk_dangnhap = st.text_input("Tên tài khoản").strip()
-    mk_dangnhap = st.text_input("Mật khẩu", type="password").strip()
     
-    if st.button("Đăng nhập"):
+    # === NHẬP ENTER = ĐĂNG NHẬP LUÔN ===
+    with st.form("dangnhap_form"):
+        tk_dangnhap = st.text_input("Tên tài khoản").strip()
+        mk_dangnhap = st.text_input("Mật khẩu", type="password").strip()
+        gui_nhan = st.form_submit_button("Đăng nhập")  # Enter tự động kích hoạt
+    
+    if gui_nhan:
         nd = kiem_tra_dang_nhap(tk_dangnhap, mk_dangnhap)
         if nd:
             st.session_state.nguoi_dung = nd
@@ -94,7 +121,9 @@ if st.session_state.nguoi_dung is None:
             st.error("❌ Sai tài khoản hoặc mật khẩu!")
 else:
     nd = st.session_state.nguoi_dung
-    st.success(f"✅ Xin chào: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
+    
+    # === SỬA CHỮ CHÀO ===
+    st.success(f"✅ Chào mừng bạn đã đăng nhập: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
     
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
     
@@ -127,7 +156,7 @@ else:
                 st.error(f"❌ Lỗi đọc file: {str(e)}")
     
     with tab2:
-        if nd["VaiTro"] == "Quản trị":
+        if nd["VaiTro"] in ["Quản trị", "Admin", "quản trị"]:
             link_master = f"https://docs.google.com/spreadsheets/d/{st.secrets['google_sheets_master_id']}/edit"
             st.link_button("📋 Mở Bảng tổng hợp Master", link_master)
         else:

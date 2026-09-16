@@ -10,7 +10,7 @@ class CapNhatTaiKhoanApp:
     def __init__(self, root):
         self.root = root
         self.root.title("CẬP NHẬT TÀI KHOẢN & ĐẨY LÊN GITHUB — Nước sạch Sơn La")
-        self.root.geometry("650x580")
+        self.root.geometry("650x620")
         self.root.resizable(True, True)
         
         # === Thư mục gốc = thư mục chứa file CapNhat_TuDong.py ===
@@ -21,7 +21,11 @@ class CapNhatTaiKhoanApp:
         self.thu_muc_mau = os.path.join(self.thu_muc_goc, "templates")
         os.makedirs(self.thu_muc_mau, exist_ok=True)
         
-        # Mẫu code app.py
+        # === Đọc tên hệ thống từ ô A1 file Excel mẫu ===
+        self.ten_he_thong = "HỆ THỐNG BÁO CÁO NƯỚC SẠCH TỈNH SƠN LA"
+        self.doc_ten_tu_file_mau()
+        
+        # Mẫu code app.py — ĐÃ CẬP NHẬT TẤT CẢ YÊU CẦU
         self.mau_code_app = '''import streamlit as st
 import pandas as pd
 import gspread
@@ -32,6 +36,30 @@ import os
 DANH_SACH_TAI_KHOAN = [
 {DANH_SACH_TAI_KHOAN}
 ]
+
+# ===== CẤU HÌNH GIAO DIỆN — NỀN TỐI MẶC ĐỊNH =====
+st.set_page_config(
+    page_title="{TEN_HE_THONG}",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={}
+)
+
+# === BUỘC NỀN TỐI ===
+st.markdown("""
+<style>
+    .stApp {{
+        background-color: #0E1117;
+        color: #FAFAFA;
+    }}
+    div[data-testid="stForm"] {{
+        background-color: #262730;
+    }}
+    .stButton>button {{
+        width: 100%;
+    }}
+</style>
+""", unsafe_allow_html=True)
 
 # ===== CẤU HÌNH KẾT NỐI =====
 SCOPES = [
@@ -91,18 +119,21 @@ def luu_vao_sheets(ten_donvi, df):
     return True, "Đã lưu thành công"
 
 # ===== GIAO DIỆN CHÍNH =====
-st.set_page_config(page_title="Báo cáo Nước sạch Sơn La", layout="wide")
-st.title("🏞️ HỆ THỐNG BÁO CÁO NƯỚC SẠCH TỈNH SƠN LA")
+st.title("🏞️ {TEN_HE_THONG}")
 
 if "nguoi_dung" not in st.session_state:
     st.session_state.nguoi_dung = None
 
 if st.session_state.nguoi_dung is None:
     st.subheader("🔐 Đăng nhập hệ thống")
-    tk_dangnhap = st.text_input("Tên tài khoản").strip()
-    mk_dangnhap = st.text_input("Mật khẩu", type="password").strip()
     
-    if st.button("Đăng nhập"):
+    # === NHẬP ENTER = ĐĂNG NHẬP LUÔN ===
+    with st.form("dangnhap_form"):
+        tk_dangnhap = st.text_input("Tên tài khoản").strip()
+        mk_dangnhap = st.text_input("Mật khẩu", type="password").strip()
+        gui_nhan = st.form_submit_button("Đăng nhập")  # Enter tự động kích hoạt
+    
+    if gui_nhan:
         nd = kiem_tra_dang_nhap(tk_dangnhap, mk_dangnhap)
         if nd:
             st.session_state.nguoi_dung = nd
@@ -111,7 +142,9 @@ if st.session_state.nguoi_dung is None:
             st.error("❌ Sai tài khoản hoặc mật khẩu!")
 else:
     nd = st.session_state.nguoi_dung
-    st.success(f"✅ Xin chào: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
+    
+    # === SỬA CHỮ CHÀO ===
+    st.success(f"✅ Chào mừng bạn đã đăng nhập: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
     
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
     
@@ -144,7 +177,7 @@ else:
                 st.error(f"❌ Lỗi đọc file: {str(e)}")
     
     with tab2:
-        if nd["VaiTro"] == "Quản trị":
+        if nd["VaiTro"] in ["Quản trị", "Admin", "quản trị"]:
             link_master = f"https://docs.google.com/spreadsheets/d/{st.secrets['google_sheets_master_id']}/edit"
             st.link_button("📋 Mở Bảng tổng hợp Master", link_master)
         else:
@@ -153,8 +186,23 @@ else:
     if st.button("🚪 Đăng xuất"):
         st.session_state.nguoi_dung = None
         st.rerun()
-'''
+'''.replace("{TEN_HE_THONG}", self.ten_he_thong)
         self.tao_giao_dien()
+
+    def doc_ten_tu_file_mau(self):
+        """Đọc tên hệ thống từ ô A1 file Excel mẫu"""
+        for ten_file in os.listdir(self.thu_muc_goc):
+            if ten_file.lower().endswith((".xlsx", ".xls")) and "Mau" in ten_file or "mau" in ten_file:
+                try:
+                    duong_dan = os.path.join(self.thu_muc_goc, ten_file)
+                    df = pd.read_excel(duong_dan, header=None)
+                    ten_moi = str(df.iloc[0, 0]).strip()
+                    if ten_moi:
+                        self.ten_he_thong = ten_moi
+                        self.ghi(f"📌 Đọc tên hệ thống từ ô A1: {ten_moi}")
+                    return
+                except:
+                    pass
 
     def tao_giao_dien(self):
         tk.Label(self.root, text="🔄 CẬP NHẬT TÀI KHOẢN & ĐẨY LÊN GITHUB", 
@@ -163,7 +211,7 @@ else:
         khung = tk.Frame(self.root)
         khung.pack(padx=30, pady=5, fill="both", expand=True)
 
-        # === 1. File Excel tài khoản — MỞ TỪ THƯ MỤC CHỨA CHƯƠNG TRÌNH ===
+        # === 1. File Excel tài khoản — MỞ TỪ THƯ MỤC CHƯƠNG TRÌNH ===
         khung1 = tk.LabelFrame(khung, text="📋 File Excel — Danh sách tài khoản", padx=10, pady=8)
         khung1.pack(fill="x", pady=5)
         self.duong_dan_excel_tk = tk.StringVar()
@@ -206,7 +254,7 @@ else:
         """Mở mặc định tại thư mục chứa file CapNhat_TuDong.py"""
         f = filedialog.askopenfilename(
             title="Chọn file Excel danh sách tài khoản",
-            initialdir=self.thu_muc_goc,  # === MỞ TẠI THƯ MỤC CHƯƠNG TRÌNH ===
+            initialdir=self.thu_muc_goc,
             filetypes=[("Excel", "*.xlsx"), ("Excel 97-2003", "*.xls")]
         )
         if f: 
@@ -221,6 +269,15 @@ else:
         if f:
             self.duong_dan_file_mau.set(f)
             self.ghi(f"✅ Đã chọn file mẫu: {os.path.basename(f)}")
+            # Đọc lại tên hệ thống từ file mẫu vừa chọn
+            try:
+                df = pd.read_excel(f, header=None)
+                ten_moi = str(df.iloc[0, 0]).strip()
+                if ten_moi:
+                    self.ten_he_thong = ten_moi
+                    self.ghi(f"📌 Tên hệ thống: {ten_moi}")
+            except:
+                pass
 
     def doc_danh_sach_tu_excel(self, duong_dan):
         try:
@@ -260,7 +317,6 @@ else:
     def thuc_hien(self):
         self.ghi("="*50)
         
-        # Kiểm tra file tài khoản
         if not self.duong_dan_excel_tk.get().strip():
             messagebox.showwarning("Thiếu file", "Vui lòng chọn file Excel tài khoản!")
             return
@@ -283,7 +339,7 @@ else:
         # === SAO CHÉP FILE MẪU ===
         duong_dan_mau = self.duong_dan_file_mau.get().strip()
         if duong_dan_mau:
-            self.ghi(f"🔍 Kiểm tra file mẫu: {duong_dan_mau}")
+            self.ghi(f"🔍 Kiểm tra file mẫu: {os.path.basename(duong_dan_mau)}")
             if os.path.isfile(duong_dan_mau):
                 try:
                     ten_file = os.path.basename(duong_dan_mau)
@@ -299,9 +355,9 @@ else:
                 except Exception as e:
                     self.ghi(f"❌ Lỗi sao chép: {str(e)}")
             else:
-                self.ghi(f"❌ Không tìm thấy file: {duong_dan_mau}")
+                self.ghi(f"❌ Không tìm thấy file")
         else:
-            self.ghi("ℹ️ Bỏ qua file mẫu (chưa chọn)")
+            self.ghi("ℹ️ Bỏ qua file mẫu")
 
         # Khởi tạo Git nếu chưa có
         if not os.path.exists(".git"):
@@ -335,7 +391,7 @@ else:
             if kq_push.returncode == 0:
                 self.ghi("")
                 self.ghi("🎉 THÀNH CÔNG! Đã đẩy lên GitHub ✅")
-                messagebox.showinfo("Hoàn thành", "✅ Cập nhật xong!\nTải lại Streamlit để kiểm tra nút tải file mẫu")
+                messagebox.showinfo("Hoàn thành", "✅ Cập nhật xong!\nTải lại Streamlit để xem giao diện mới")
             else:
                 self.ghi(f"❌ Lỗi đẩy: {kq_push.stderr}")
                 messagebox.showerror("Lỗi", "Chạy thủ công: git push --force -u origin main")
