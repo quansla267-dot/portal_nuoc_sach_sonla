@@ -6,14 +6,14 @@ import os
 
 # ===== DANH SÁCH TÀI KHOẢN — TỰ CẬP NHẬT TỪ EXCEL =====
 DANH_SACH_TAI_KHOAN = [
-    {"TaiKhoan": "admin", "MatKhau": "admin", "VaiTro": "", "DonVi": "ADMIN"},
-    {"TaiKhoan": "tanlap", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Tân Lập"},
-    {"TaiKhoan": "chiengson", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Chiềng Sơn"},
-    {"TaiKhoan": "bacyen", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Bắc Yên"},
-    {"TaiKhoan": "yenchau", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Yên Châu"},
-    {"TaiKhoan": "chienghac", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Chiềng Hặc"},
-    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Phiêng Khoài"},
-    {"TaiKhoan": "phiengcam", "MatKhau": "123456", "VaiTro": "", "DonVi": "Xã Phiêng Cằm"}
+    {"TaiKhoan": "admin", "MatKhau": "admin", "VaiTro": "Quản trị", "DonVi": "ADMIN"},
+    {"TaiKhoan": "tanlap", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Tân Lập"},
+    {"TaiKhoan": "chiengson", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Chiềng Sơn"},
+    {"TaiKhoan": "bacyen", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Bắc Yên"},
+    {"TaiKhoan": "yenchau", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Yên Châu"},
+    {"TaiKhoan": "chienghac", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Chiềng Hặc"},
+    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Phiêng Khoài"},
+    {"TaiKhoan": "phiengcam", "MatKhau": "123456", "VaiTro": "Các xã/phường", "DonVi": "Xã Phiêng Cằm"}
 ]
 
 # ===== CẤU HÌNH KẾT NỐI =====
