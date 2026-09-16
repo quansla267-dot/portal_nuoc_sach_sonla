@@ -290,38 +290,41 @@ else:
                 "https://github.com/quansla267-dot/portal_nuoc_sach_sonla.git"], capture_output=True)
             subprocess.run(["git", "branch", "-M", "main"], capture_output=True)
 
-        # Bước 6: Đẩy lên GitHub
-        # Bước 6: Đẩy lên GitHub
-        self.ghi("📤 Kiểm tra & lấy cập nhật từ GitHub trước...")
-        
-        # Lấy cập nhật từ GitHub về trước
-        kq_pull = subprocess.run(["git", "pull", "origin", "main", "--rebase"], 
-                                  capture_output=True, text=True)
-        if kq_pull.returncode == 0:
-            self.ghi("✅ Đã đồng bộ với GitHub")
-        else:
-            self.ghi(f"⚠️ Tự giải quyết xung đột hoặc tiếp tục đẩy...")
-            # Buộc đẩy nếu cần (chỉ dùng khi chắc chắn!)
-            # subprocess.run(["git", "push", "--force", "-u", "origin", "main"], capture_output=True)
-        
-        # Thêm & Commit lại sau khi đồng bộ
+        # Bước 6: Thêm & Commit
         subprocess.run(["git", "add", "."], capture_output=True)
         ghichu = self.ghi_chu.get().strip() or f"Cập nhật {datetime.now().strftime('%d/%m/%Y')}"
         kq_commit = subprocess.run(["git", "commit", "-m", ghichu], capture_output=True, text=True)
         
-        # Đẩy lên
+        if kq_commit.returncode != 0:
+            if "nothing to commit" in kq_commit.stdout + kq_commit.stderr:
+                self.ghi("ℹ️ Không có thay đổi mới")
+                messagebox.showinfo("Thông báo", "Không có gì thay đổi!")
+                return
+            self.ghi(f"❌ Lỗi Commit: {kq_commit.stderr}")
+            return
+
+        # Bước 7: Đẩy lên GitHub — tự xử lý xung đột
+        self.ghi("📤 Đang đẩy lên GitHub...")
         kq_push = subprocess.run(["git", "push", "-u", "origin", "main"], capture_output=True, text=True)
+        
+        if kq_push.returncode != 0:
+            # Bị từ chối → lấy về rồi buộc đẩy
+            self.ghi("⚠️ Có thay đổi trên GitHub → đồng bộ & đẩy...")
+            subprocess.run(["git", "pull", "origin", "main", "--no-edit"], capture_output=True)
+            subprocess.run(["git", "add", "."], capture_output=True)
+            subprocess.run(["git", "commit", "-m", "Đồng bộ"], capture_output=True, text=True)
+            kq_push = subprocess.run(["git", "push", "--force", "-u", "origin", "main"], capture_output=True, text=True)
         
         if kq_push.returncode == 0:
             self.ghi("")
             self.ghi("🎉 THÀNH CÔNG! Đã đẩy lên GitHub ✅")
             self.ghi("→ Streamlit cập nhật sau 1-2 phút")
-            messagebox.showinfo("Hoàn thành", "✅ Thành công!")
+            messagebox.showinfo("Hoàn thành", "✅ Thành công!\nTừ sau dùng bình thường nhé!")
         else:
-            self.ghi(f"❌ Lỗi: {kq_push.stderr}")
-            messagebox.showerror("Lỗi", "Vẫn bị từ chối!\nMở thư mục dự án → chuột phải → Git Bash Here → gõ lệnh bên dưới")   messagebox.showerror("Lỗi", "Không đẩy được lên GitHub!\nKiểm tra mạng hoặc đăng nhập")
+            self.ghi(f"❌ Lỗi cuối: {kq_push.stderr}")
+            messagebox.showerror("Lỗi", "Vui lòng chạy thủ công:\ngit push --force -u origin main")
 
-# ===== CHẠY =====
+# ===== CHẠY CHƯƠNG TRÌNH =====
 if __name__ == "__main__":
     root = tk.Tk()
     app = CapNhatTaiKhoanApp(root)

@@ -12,7 +12,8 @@ DANH_SACH_TAI_KHOAN = [
     {"TaiKhoan": "bacyen", "MatKhau": "123456", "VaiTro": "Không", "DonVi": "Xã Bắc Yên"},
     {"TaiKhoan": "yenchau", "MatKhau": "123456", "VaiTro": "Không", "DonVi": "Xã Yên Châu"},
     {"TaiKhoan": "chienghac", "MatKhau": "123456", "VaiTro": "Không", "DonVi": "Xã Chiềng Hặc"},
-    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "Không", "DonVi": "Xã Phiêng Khoài"}
+    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "Không", "DonVi": "Xã Phiêng Khoài"},
+    {"TaiKhoan": "phiengcam", "MatKhau": "123456", "VaiTro": "Không", "DonVi": "Xã Phiêng Cằm"}
 ]
 
 # ===== CẤU HÌNH KẾT NỐI =====
