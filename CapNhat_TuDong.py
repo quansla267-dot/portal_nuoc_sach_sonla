@@ -8,7 +8,7 @@ import pandas as pd
 class CapNhatTaiKhoanApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("CẬP NHẬT TÀI KHOẢN & ĐẨY LÊN GITHUB — Nước sạch Sơn La")
+        self.root.title("CẬP NHẬT TÀI KHOẢN & ĐẨY LÊN GITHUB — KT&VLXD_quansla.267@gmail.com")
         self.root.geometry("650x550")
         self.root.resizable(True, True)
         
