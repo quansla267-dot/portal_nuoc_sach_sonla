@@ -4,25 +4,27 @@ import gspread
 from google.oauth2.service_account import Credentials
 import os
 
-# ===== DANH SÁCH TÀI KHOẢN =====
+# ===== DANH SÁCH TÀI KHOẢN — TỰ CẬP NHẬT TỪ EXCEL =====
 DANH_SACH_TAI_KHOAN = [
-    {"TaiKhoan": "admin", "MatKhau": "", "VaiTro": "Quản trị", "DonVi": ""},
-    {"TaiKhoan": "tanlap", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""},
-    {"TaiKhoan": "chiengson", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""},
-    {"TaiKhoan": "bacyen", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""},
-    {"TaiKhoan": "yenchau", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""},
-    {"TaiKhoan": "chienghac", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""},
-    {"TaiKhoan": "phiengkhoai", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""},
-    {"TaiKhoan": "phiengcam", "MatKhau": "", "VaiTro": "Tài khoản xã/phường", "DonVi": ""}
+    {"TaiKhoan": "admin", "MatKhau": "admin", "VaiTro": "Quản trị", "DonVi": "ADMIN"},
+    {"TaiKhoan": "tanlap", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Tân Lập"},
+    {"TaiKhoan": "chiengson", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Chiềng Sơn"},
+    {"TaiKhoan": "bacyen", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Bắc Yên"},
+    {"TaiKhoan": "yenchau", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Yên Châu"},
+    {"TaiKhoan": "chienghac", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Chiềng Hặc"},
+    {"TaiKhoan": "phiengkhoai", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Phiêng Khoài"},
+    {"TaiKhoan": "phiengcam", "MatKhau": "123456", "VaiTro": "Tài khoản xã/phường", "DonVi": "Xã Phiêng Cằm"}
 ]
 
-# ===== NỀN TỐI MẶC ĐỊNH =====
+# ===== CẤU HÌNH GIAO DIỆN — NỀN TỐI MẶC ĐỊNH =====
 st.set_page_config(
     page_title="HỆ THỐNG BÁO CÁO NƯỚC SẠCH TỈNH SƠN LA",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={}
 )
 
+# === BUỘC NỀN TỐI ===
 st.markdown("""
 <style>
     .stApp {{
@@ -32,10 +34,13 @@ st.markdown("""
     div[data-testid="stForm"] {{
         background-color: #262730;
     }}
+    .stButton>button {{
+        width: 100%;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-# ===== KẾT NỐI GOOGLE SHEETS =====
+# ===== CẤU HÌNH KẾT NỐI =====
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -62,11 +67,12 @@ def kiem_tra_dang_nhap(tk, mk):
 def tai_file_mau():
     for ten_file in os.listdir("templates"):
         if ten_file.lower().endswith((".xlsx", ".xls")):
-            with open(os.path.join("templates", ten_file), "rb") as f:
+            duong_dan = os.path.join("templates", ten_file)
+            with open(duong_dan, "rb") as f:
                 return f.read(), ten_file
     return None, None
 
-# ===== LƯU DỮ LIỆU =====
+# ===== LƯU DỮ LIỆU VÀO GOOGLE SHEETS =====
 def luu_vao_sheets(ten_donvi, df):
     sh = ket_noi_gsheets()
     if not sh:
@@ -76,6 +82,10 @@ def luu_vao_sheets(ten_donvi, df):
     for cot in df.columns:
         if pd.api.types.is_datetime64_any_dtype(df[cot]):
             df[cot] = df[cot].dt.strftime("%Y-%m-%d")
+        else:
+            df[cot] = df[cot].apply(
+                lambda x: x.strftime("%Y-%m-%d") if hasattr(x, "strftime") else x
+            )
     
     try:
         ws = sh.worksheet(ten_donvi)
@@ -95,11 +105,12 @@ if "nguoi_dung" not in st.session_state:
 
 if st.session_state.nguoi_dung is None:
     st.subheader("🔐 Đăng nhập hệ thống")
-    # === NHẬP ENTER = ĐĂNG NHẬP ===
+    
+    # === NHẬP ENTER = ĐĂNG NHẬP LUÔN ===
     with st.form("dangnhap_form"):
-        tk_dangnhap = st.text_input("Tên tài khoản")
-        mk_dangnhap = st.text_input("Mật khẩu", type="password")
-        gui_nhan = st.form_submit_button("Đăng nhập")
+        tk_dangnhap = st.text_input("Tên tài khoản").strip()
+        mk_dangnhap = st.text_input("Mật khẩu", type="password").strip()
+        gui_nhan = st.form_submit_button("Đăng nhập")  # Enter tự động kích hoạt
     
     if gui_nhan:
         nd = kiem_tra_dang_nhap(tk_dangnhap, mk_dangnhap)
@@ -110,7 +121,8 @@ if st.session_state.nguoi_dung is None:
             st.error("❌ Sai tài khoản hoặc mật khẩu!")
 else:
     nd = st.session_state.nguoi_dung
-    # === CHỮ CHÀO ĐÃ SỬA ===
+    
+    # === SỬA CHỮ CHÀO ===
     st.success(f"✅ Chào mừng bạn đã đăng nhập: {nd['TaiKhoan']} — {nd['DonVi']} ({nd['VaiTro']})")
     
     tab1, tab2 = st.tabs(["📤 Nộp báo cáo", "📊 Tổng hợp"])
@@ -124,7 +136,7 @@ else:
                 file_name=f"BaoCao_{nd['DonVi']}.xlsx"
             )
         else:
-            st.warning("⚠️ Chưa có file mẫu!")
+            st.warning("⚠️ Chưa có file mẫu — Quản trị vui lòng cập nhật!")
         
         st.markdown("---")
         file_up = st.file_uploader("Chọn file đã điền dữ liệu", type=["xlsx"])
@@ -133,16 +145,20 @@ else:
             try:
                 df_data = pd.read_excel(file_up)
                 st.dataframe(df_data, use_container_width=True)
+                
                 if st.button("✅ Nộp báo cáo"):
                     ok, msg = luu_vao_sheets(nd["DonVi"], df_data)
-                    st.success(f"✅ {msg}" if ok else f"❌ {msg}")
+                    if ok:
+                        st.success(f"✅ {msg}")
+                    else:
+                        st.error(f"❌ {msg}")
             except Exception as e:
                 st.error(f"❌ Lỗi đọc file: {str(e)}")
     
     with tab2:
-        if nd["VaiTro"] in ["Quản trị", "Admin", "quản trị", "admin"]:
-            link = f"https://docs.google.com/spreadsheets/d/{st.secrets['google_sheets_master_id']}/edit"
-            st.link_button("📋 Mở Bảng tổng hợp Master", link)
+        if nd["VaiTro"] in ["Quản trị", "Admin", "quản trị"]:
+            link_master = f"https://docs.google.com/spreadsheets/d/{st.secrets['google_sheets_master_id']}/edit"
+            st.link_button("📋 Mở Bảng tổng hợp Master", link_master)
         else:
             st.info("🔒 Chỉ quản trị viên xem được tổng hợp toàn tỉnh")
     
